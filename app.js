@@ -3,6 +3,10 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const multer = require("multer");
 const upload = multer({ dest: "pdfs/" });
+const {convertImage} = require('./utils/convert');
+const { file } = require('pdfkit');
+
+
 
 
 
@@ -52,7 +56,10 @@ app.post("/upload", upload.array('file'), uploadFiles);
 function uploadFiles(req, res) {
     console.log(req.body);
     console.log(req.files);
+
     res.json({ message: "Successfully uploaded files" });
+    convertImage('./pdfs/' + req.files[0].filename);
+    console.log(req.files[0]);
 }
 
    
