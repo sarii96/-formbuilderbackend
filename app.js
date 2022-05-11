@@ -15,8 +15,11 @@ app.use(cors({
     origin: 'http://localhost:5500'
 }));
 
+
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
 
 
 //Register
@@ -57,10 +60,11 @@ function uploadFiles(req, res) {
     console.log(req.body);
     console.log(req.files);
 
-    res.json({ message: "Successfully uploaded files" });
+    res.json({ filename:req.files[0].filename +'-1.jpg'});
     convertImage('./pdfs/' + req.files[0].filename);
-    console.log(req.files[0]);
 }
+
+
 
    
 app.listen(3000,()=>{ console.log("Listening...")});

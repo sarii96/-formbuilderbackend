@@ -6,7 +6,7 @@ function convertImage(pdfPath) {
 
     let option = {
         format : 'jpeg',
-        out_dir : './pdfimages/',
+        out_dir : './public/pdfimages/',
         out_prefix : path.basename(pdfPath, path.extname(pdfPath)),
         page : 1
     }
