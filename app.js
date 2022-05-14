@@ -64,7 +64,11 @@ function uploadFiles(req, res) {
     convertImage('./pdfs/' + req.files[0].filename);
 }
 
-
+//drag fields to canvas --eventually we are going to modify
+app.get("/fieldList",(req, res)=>{
+const fields = ["Sarah Romero", "123 S 45 W, Apt 1", "Idaho", "Rexburg", 84011, 800, "5/13/2022", "123455566n" ];
+res.json(fields);
+});
 
    
 app.listen(3000,()=>{ console.log("Listening...")});
