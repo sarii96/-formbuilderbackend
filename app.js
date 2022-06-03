@@ -97,7 +97,7 @@ const templateName = req.body.templateName;
 const userEmail = req.params["userEmail"];
 console.log(listOfWords);
 await redisClient.zAdd('templatesByEmail-'+userEmail,[{score: "0",value:templateName}]);
-await redisClient.hSet('templatesByEmailMap', userEmail + "-" + templateName, JSON.stringify(listOfWords));
+await redisClient.hSet('templatesByEmailMap', userEmail + "-" + templateName, JSON.stringify(req.body));
 // await redisClient.zAdd("user:0:followers", [{score: "1", value: "John"}, {score: "2", value: "Other John"}]);
 console.log(JSON.stringify(listOfWords));
 res.status(200);
@@ -109,13 +109,18 @@ res.send({result:"Saved"});
 app.get("/templates/:userEmail", async(req, res)=>{
 const userEmail = req.params["userEmail"];
 const templateNames = await  redisClient.zRange('templatesByEmail-'+userEmail, 0, -1);
-const templateJson = [];
-templateNames.forEach(async templateName => {
-    const templateString = await redisClient.hGet('templatesByEmailMap', userEmail + "-" + templateName);
-   templateJson.push(templateString);
-   console.log(templateName);
+let templateJson = [];
+const templatePromises = [];
+templateNames.forEach(templateName => {
+    const templatePromise = redisClient.hGet('templatesByEmailMap', userEmail + '-' + templateName);
+   templatePromises.push(templatePromise);
+   console.log('adding to array');
+//    console.log(templateString);
 });
+templateJson = await Promise.all(templatePromises);
+console.log(JSON.stringify(templateJson));
 res.status(200);
+console.log('sending response');
 res.send(templateJson);
 });
    
