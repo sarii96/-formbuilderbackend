@@ -5,10 +5,19 @@ const multer = require("multer");
 const upload = multer({ dest: "pdfs/" });
 const {convertImage} = require('./utils/convert');
 const { file } = require('pdfkit');
+const {createClient} = require('redis');
+const { response } = require('express');
+const pdfImageService = require('./services/pdfImageService');
+const { json } = require('express/lib/response');
+const redisClient = createClient({
+    socket:{
+        port:6379,
+        host:"127.0.0.1",
+    },
+  }
+  );
 
-
-
-
+redisClient.connect();
 
 const app = express();
 app.use(cors({
@@ -56,19 +65,58 @@ app.post('/login', (req, res)=>{
 //upload file
 
 app.post("/upload", upload.array('file'), uploadFiles);
-function uploadFiles(req, res) {
+async function uploadFiles(req, res) {
     console.log(req.body);
     console.log(req.files);
-
-    res.json({ filename:req.files[0].filename +'-1.jpg'});
+   const templateName  = req.body.templateName;
+   const imgName = req.files[0].filename +'-1.jpg';
+   console.log(templateName);
+//    await redisClient.hSet('templates', templateName, JSON.stringify({templateName, imgName}));
+    res.json({imgName});
     convertImage('./pdfs/' + req.files[0].filename);
 }
 
-//drag fields to canvas --eventually we are going to modify
-app.get("/fieldList",(req, res)=>{
-const fields = ["Sarah Romero", "123 S 45 W, Apt 1", "Idaho", "Rexburg", 84011, 800, "5/13/2022", "123455566n" ];
-res.json(fields);
+//data list fiscal, client, and debtor
+app.get("/fieldList", async(req, res) => {
+const enpointName = req.enpointName;
+const  fiscalResponse = await fetch("http://localhost:4561/fiscal/100");
+const responseJson =  await fiscalResponse.json();
+res.send(responseJson);
+
+// if( fiscalResponse ===   ) {
+
+// }
 });
 
+//send the saves change of the image 
+
+ app.post("/pdfImageCoordinates/:userEmail",  async (req, res)=>{
+const listOfWords =  req.body.listOfWords;
+const listOfWordsId = req.body.listOfWordsId;
+const templateName = req.body.templateName;
+const userEmail = req.params["userEmail"];
+console.log(listOfWords);
+await redisClient.zAdd('templatesByEmail-'+userEmail,[{score: "0",value:templateName}]);
+await redisClient.hSet('templatesByEmailMap', userEmail + "-" + templateName, JSON.stringify(listOfWords));
+// await redisClient.zAdd("user:0:followers", [{score: "1", value: "John"}, {score: "2", value: "Other John"}]);
+console.log(JSON.stringify(listOfWords));
+res.status(200);
+res.send({result:"Saved"});
+});
+
+
+//get template name and date of templates
+app.get("/templates/:userEmail", async(req, res)=>{
+const userEmail = req.params["userEmail"];
+const templateNames = await  redisClient.zRange('templatesByEmail-'+userEmail, 0, -1);
+const templateJson = [];
+templateNames.forEach(async templateName => {
+    const templateString = await redisClient.hGet('templatesByEmailMap', userEmail + "-" + templateName);
+   templateJson.push(templateString);
+   console.log(templateName);
+});
+res.status(200);
+res.send(templateJson);
+});
    
 app.listen(3000,()=>{ console.log("Listening...")});
