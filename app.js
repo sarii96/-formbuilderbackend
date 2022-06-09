@@ -88,6 +88,16 @@ res.send(responseJson);
 // }
 });
 
+//get new coordinates of the template
+app.get("/templates/:userEmail/:templateName", async(req, res)=>{
+    const userEmail = req.params.userEmail;
+    const templateName = req.params.templateName;
+    const templateJson = await redisClient.hGet('templatesByEmailMap', userEmail + '-' + templateName);
+    const templateObject = JSON.parse(templateJson);   
+    res.status(200);
+    res.send(templateObject);
+});
+
 //send the saves change of the image 
 
  app.post("/pdfImageCoordinates/:userEmail",  async (req, res)=>{
@@ -117,11 +127,17 @@ templateNames.forEach(templateName => {
    console.log('adding to array');
 //    console.log(templateString);
 });
+
+//we convert the templetaJson( a string) to an object before send it to the fronted
 templateJson = await Promise.all(templatePromises);
-console.log(JSON.stringify(templateJson));
+let templateObjects = [];
+templateJson.forEach((templateString) =>{
+const templateObject = JSON.parse(templateString);   
+templateObjects.push(templateObject);
+});
 res.status(200);
 console.log('sending response');
-res.send(templateJson);
+res.send(templateObjects);
 });
    
 app.listen(3000,()=>{ console.log("Listening...")});
