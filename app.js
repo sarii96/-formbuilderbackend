@@ -106,8 +106,10 @@ const listOfWordsId = req.body.listOfWordsId;
 const templateName = req.body.templateName;
 const userEmail = req.params["userEmail"];
 console.log(listOfWords);
+const templateRecord = req.body;
+templateRecord.createdDate = Date.now();
 await redisClient.zAdd('templatesByEmail-'+userEmail,[{score: "0",value:templateName}]);
-await redisClient.hSet('templatesByEmailMap', userEmail + "-" + templateName, JSON.stringify(req.body));
+await redisClient.hSet('templatesByEmailMap', userEmail + "-" + templateName, JSON.stringify(templateRecord));
 // await redisClient.zAdd("user:0:followers", [{score: "1", value: "John"}, {score: "2", value: "Other John"}]);
 console.log(JSON.stringify(listOfWords));
 res.status(200);
@@ -139,5 +141,11 @@ res.status(200);
 console.log('sending response');
 res.send(templateObjects);
 });
-   
+
+//delete template
+app.delete("/templates/:userEmail/:templateName", async(req, res ) =>{
+const userEmail = req.params.userEmail;
+const templateName = req.params.templateName;
+await redisClient.hDel('templatesByEmailMap', userEmail + '-' + templateName);
+});
 app.listen(3000,()=>{ console.log("Listening...")});
